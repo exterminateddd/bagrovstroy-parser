@@ -100,7 +100,7 @@ def parse(link):
 
 file = open('data.csv', 'w+', encoding="utf8")
 writer_ = writer(file)
-data = parse('https://bagrovstroy.ru/catalog')
+data = [*parse('https://bagrovstroy.ru/catalog'), *parse("https://bagrovstroy.ru/bani")] 
 writer_.writerow(
     ['Наименование',
      'Площадь',
