@@ -3,6 +3,7 @@ from urllib import request
 from requests import get
 from BSProject import Project
 from pprint import pprint
+from csv import DictWriter, writer, reader
 import lxml
 
 
@@ -43,12 +44,32 @@ def parse_inner(link_inner):
             data['prices'].append(block_data)
         proj.price_vars.append(data)
 
+    proj.details = {}
+
+    details = [
+        i
+        .find('div', class_='details')
+        .find('div', class_='digit')
+        .text
+        for i in
+        bs_inner.find('body')
+        .find('div', class_='main')
+        .find('div', class_='project__main')
+        .find('div', class_='project__descr_wrapper')
+        .find('div', class_='project__descr')
+        .find('div', class_='descr_item__width')
+        .find('div', class_='project__spec')
+        .find_all('div', class_='project__spec_item')
+    ]
+    for k, v in zip(['Площадь', 'Размер', 'Комнаты', 'Этажность'], details):
+        proj.details[k] = v
+
     add_opts = bs_inner.find('body') \
-          .find('div', class_='main')\
-          .find('div', id='more-extras')\
-          .find_all('div')[5]\
-          .find('div', class_='extras_table__body')\
-          .find_all('label', class_='extras_table__body_row')
+        .find('div', class_='main') \
+        .find('div', id='more-extras') \
+        .find_all('div')[5] \
+        .find('div', class_='extras_table__body') \
+        .find_all('label', class_='extras_table__body_row')
 
     for opt in add_opts:
         data = {
@@ -72,7 +93,34 @@ def parse(link):
                     .find('div', class_="projects-block")
                     .find_all('div', class_="pr-wrapper")
                 ]
-    for proj in projects[:5]:
+    for proj in projects:
         items.append(parse_inner(proj))
 
     return [i.__dict__ for i in items]
+
+
+file = open('data.csv', 'w+', encoding="utf8")
+writer_ = writer(file)
+data = parse('https://bagrovstroy.ru/')
+writer_.writerow(
+    ['Наименование',
+     'Площадь',
+     'Размер',
+     'Комнаты',
+     'Этажность',
+     '90х140',
+     '140x140',
+     '190x140',
+     '90х140 отд.',
+     '140x140 отд.',
+     '190x140 отд.',
+     *[i['name'] for i in data[0]['additional_options']]
+     ])
+for p in data:
+    writer_.writerow([p['name'].split(' ')[-1],
+                      *[v for k, v in p['details'].items()],
+                      *[j['price'] for j in p['price_vars'][0]['prices']],
+                      *[j['price'] for j in p['price_vars'][1]['prices']],
+                      *[i['price'] for i in p['additional_options']]
+                      ])
+file.close()
