@@ -86,7 +86,7 @@ def parse(link):
 
     with request.urlopen(link) as response:
         html = response.read().decode('utf-8')
-    bs = BeautifulSoup(html, features="html.parser")
+    bs = BeautifulSoup(html, features="lxml")
     projects = [el.find('div', class_="project-item").find_all('a', href=True)[0]['href'] for el in
                 bs
                     .find('body')
