@@ -83,9 +83,8 @@ def parse_inner(link_inner):
 
 def parse(link):
     items = []
-
-    with request.urlopen(link) as response:
-        html = response.read().decode('utf-8')
+    html = get(link, headers={
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.98 Safari/537.36'}).text
     bs = BeautifulSoup(html, features="lxml")
     projects = [el.find('div', class_="project-item").find_all('a', href=True)[0]['href'] for el in
                 bs
