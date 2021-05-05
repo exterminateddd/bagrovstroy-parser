@@ -21,28 +21,6 @@ def parse_inner(link_inner):
         .find('div', class_="wrapper cf") \
         .find('div', class_="breadcrumbs") \
         .find('h1').text
-    descr = bs_inner \
-        .find('body') \
-        .find('div', class_='main') \
-        .find('div', class_='project__main') \
-        .find('div', class_='project__descr_wrapper') \
-        .find('div', class_="project__descr")
-    for item in descr.find_all('div'):
-        data = {
-            'header': '',
-            'prices': []
-        }
-        if item.find('div', class_='header'):
-            data['header'] = item.find('div', class_='header').text
-            if data['header'] == "Характеристики": continue
-        else:
-            continue
-        for bl in item.find_all('div', class_='project__price_block'):
-            block_data = {}
-            block_data['size'] = bl.find('div', class_='left').find('div', class_='size').text
-            block_data['price'] = bl.find('div', class_='right').find('div', class_='price').text
-            data['prices'].append(block_data)
-        proj.price_vars.append(data)
 
     proj.details = {}
 
@@ -64,19 +42,43 @@ def parse_inner(link_inner):
     for k, v in zip(['Площадь', 'Размер', 'Комнаты', 'Этажность'], details):
         proj.details[k] = v
 
-    add_opts = bs_inner.find('body') \
-        .find('div', class_='main') \
-        .find('div', id='more-extras') \
-        .find_all('div')[5] \
-        .find('div', class_='extras_table__body') \
-        .find_all('label', class_='extras_table__body_row')
+    print(link_inner)
+    if 'bani' not in link_inner and 'banja' not in link_inner:
+        descr = bs_inner \
+            .find('body') \
+            .find('div', class_='main') \
+            .find('div', class_='project__main') \
+            .find('div', class_='project__descr_wrapper') \
+            .find('div', class_="project__descr")
+        for item in descr.find_all('div'):
+            data = {
+                'header': '',
+                'prices': []
+            }
+            if item.find('div', class_='header'):
+                data['header'] = item.find('div', class_='header').text
+                if data['header'] == "Характеристики": continue
+            else:
+                continue
+            for bl in item.find_all('div', class_='project__price_block'):
+                block_data = {}
+                block_data['size'] = bl.find('div', class_='left').find('div', class_='size').text
+                block_data['price'] = bl.find('div', class_='right').find('div', class_='price').text
+                data['prices'].append(block_data)
+            proj.price_vars.append(data)
+        add_opts = bs_inner.find('body') \
+            .find('div', class_='main') \
+            .find('div', id='more-extras') \
+            .find_all('div')[5] \
+            .find('div', class_='extras_table__body') \
+            .find_all('label', class_='extras_table__body_row')
 
-    for opt in add_opts:
-        data = {
-            'name': opt.find('div', class_='name').text,
-            'price': opt.find('div', class_='price').text
-        }
-        proj.additional_options.append(data)
+        for opt in add_opts:
+            data = {
+                'name': opt.find('div', class_='name').text,
+                'price': opt.find('div', class_='price').text
+            }
+            proj.additional_options.append(data)
 
     return proj
 
@@ -100,7 +102,7 @@ def parse(link):
 
 file = open('data.csv', 'w+', encoding="utf8")
 writer_ = writer(file)
-data = [*parse('https://bagrovstroy.ru/catalog'), *parse("https://bagrovstroy.ru/bani")] 
+data = [*parse('https://bagrovstroy.ru/catalog'), *parse("https://bagrovstroy.ru/bani")]
 writer_.writerow(
     ['Наименование',
      'Площадь',
@@ -116,10 +118,19 @@ writer_.writerow(
      *[i['name'] for i in data[0]['additional_options']]
      ])
 for p in data:
-    writer_.writerow([p['name'].split(' ')[-1],
-                      *[v for k, v in p['details'].items()],
-                      *[j['price'] for j in p['price_vars'][0]['prices']],
-                      *[j['price'] for j in p['price_vars'][1]['prices']],
-                      *[i['price'] for i in p['additional_options']]
-                      ])
+    row = []
+    row.append(p['name'].split(' ')[-1])
+    for i in [v for k, v in p['details'].items()]:
+        row.append(i)
+    if not ('banja' in p['name'] or 'bani' in p['name']):
+        try:
+            for i in [j['price'] for j in p['price_vars'][0]['prices']]:
+                row.append(i)
+            for i in [j['price'] for j in p['price_vars'][1]['prices']]:
+                row.append(i)
+        except:
+            pass
+        for i in [i['price'] for i in p['additional_options']]:
+            row.append(i)
+    writer_.writerow(row)
 file.close()
