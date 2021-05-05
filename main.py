@@ -76,6 +76,3 @@ def parse(link):
         items.append(parse_inner(proj))
 
     return [i.__dict__ for i in items]
-
-
-pprint(parse("https://bagrovstroy.ru/catalog"))
